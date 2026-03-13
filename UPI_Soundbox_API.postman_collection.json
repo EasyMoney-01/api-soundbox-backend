@@ -1,0 +1,652 @@
+{
+  "info": {
+    "name": "UPI Soundbox Fake Payment API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "upi-soundbox-test-collection"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Health Check",
+      "item": [
+        {
+          "name": "GET /api/ping - Success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('success is true', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.message).to.eql('pong');",
+                  "  pm.expect(json).to.have.property('uptime');",
+                  "  pm.expect(json).to.have.property('timestamp');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ping",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ping"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - Expected Response",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"pong\",\n  \"uptime\": 42.357,\n  \"timestamp\": \"2026-03-13T10:00:00.000Z\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Generate Payload",
+      "item": [
+        {
+          "name": "POST /api/generate-payload - PhonePe ₹500",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Valid PhonePe payload', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.vendor).to.eql('phonepe');",
+                  "  pm.expect(json.transactionId).to.be.a('string');",
+                  "  pm.expect(json.payload.code).to.eql('PAYMENT_SUCCESS');",
+                  "  pm.expect(json.payload.data.amount).to.eql(50000);",
+                  "  pm.environment.set('lastTxnId', json.transactionId);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/generate-payload?vendor=phonepe&amount=500",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "generate-payload"],
+              "query": [
+                { "key": "vendor", "value": "phonepe" },
+                { "key": "amount", "value": "500" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - PhonePe Expected Response",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"vendor\": \"phonepe\",\n  \"transactionId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"payload\": {\n    \"vendor\": \"phonepe\",\n    \"success\": true,\n    \"code\": \"PAYMENT_SUCCESS\",\n    \"message\": \"Your payment is successful.\",\n    \"data\": {\n      \"merchantId\": \"PHONEPE_A1B2C3D4\",\n      \"merchantTransactionId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n      \"transactionId\": \"T1741860000000\",\n      \"amount\": 50000,\n      \"state\": \"COMPLETED\",\n      \"responseCode\": \"SUCCESS\",\n      \"paymentInstrument\": {\n        \"type\": \"UPI\",\n        \"utr\": \"1741860000000\",\n        \"vpa\": \"customer@ybl\",\n        \"accountHolderName\": \"Customer\"\n      }\n    },\n    \"timestamp\": \"2026-03-13T10:00:00.000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /api/generate-payload - Paytm ₹250",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Valid Paytm payload', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.vendor).to.eql('paytm');",
+                  "  pm.expect(json.payload.status).to.eql('SUCCESS');",
+                  "  pm.expect(json.payload.amount).to.eql('250.00');",
+                  "  pm.expect(json.payload.responseCode).to.eql('01');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/generate-payload?vendor=paytm&amount=250",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "generate-payload"],
+              "query": [
+                { "key": "vendor", "value": "paytm" },
+                { "key": "amount", "value": "250" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - Paytm Expected Response",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"vendor\": \"paytm\",\n  \"transactionId\": \"b2c3d4e5-f6a7-8901-bcde-f12345678901\",\n  \"payload\": {\n    \"vendor\": \"paytm\",\n    \"event\": \"PAYMENT_SUCCESS\",\n    \"transactionId\": \"b2c3d4e5-f6a7-8901-bcde-f12345678901\",\n    \"orderId\": \"PAYTM_ORDER_B2C3D4E5F6A7\",\n    \"amount\": \"250.00\",\n    \"currency\": \"INR\",\n    \"status\": \"SUCCESS\",\n    \"responseCode\": \"01\",\n    \"responseMessage\": \"Txn Successful\",\n    \"paymentMode\": \"UPI\",\n    \"bankName\": \"HDFC Bank\",\n    \"bankTxnId\": \"HDFC1741860000000\",\n    \"txnDate\": \"2026-03-13T10:00:00.000Z\",\n    \"checksumHash\": \"abcdef1234567890abcdef1234567890\",\n    \"mid\": \"PAYTM_MID_B2C3D4E5\",\n    \"gatewayName\": \"PAYTM\",\n    \"vpa\": \"customer@paytm\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /api/generate-payload - BharatPe ₹1000",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Valid BharatPe payload', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.vendor).to.eql('bharatpe');",
+                  "  pm.expect(json.payload.status).to.eql('SUCCESS');",
+                  "  pm.expect(json.payload.amount).to.eql('1000.00');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/generate-payload?vendor=bharatpe&amount=1000",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "generate-payload"],
+              "query": [
+                { "key": "vendor", "value": "bharatpe" },
+                { "key": "amount", "value": "1000" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - BharatPe Expected Response",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"vendor\": \"bharatpe\",\n  \"transactionId\": \"c3d4e5f6-a7b8-9012-cdef-012345678902\",\n  \"payload\": {\n    \"vendor\": \"bharatpe\",\n    \"status\": \"SUCCESS\",\n    \"statusCode\": 200,\n    \"message\": \"Payment received successfully\",\n    \"txnId\": \"c3d4e5f6-a7b8-9012-cdef-012345678902\",\n    \"refId\": \"BP1741860000000\",\n    \"amount\": \"1000.00\",\n    \"currency\": \"INR\",\n    \"paymentMode\": \"UPI\",\n    \"vpa\": \"customer@bharatpe\",\n    \"merchantId\": \"BPMERCHANTC3D4E5F6\",\n    \"terminalId\": \"BPTERMC3D4E5\",\n    \"rrn\": \"174186000000\",\n    \"timestamp\": \"2026-03-13T10:00:00.000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /api/generate-payload - GPay ₹750",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Valid GPay payload', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.vendor).to.eql('gpay');",
+                  "  pm.expect(json.payload.paymentStatus).to.eql('SUCCESS');",
+                  "  pm.expect(json.payload.amount).to.eql('750.00');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/generate-payload?vendor=gpay&amount=750",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "generate-payload"],
+              "query": [
+                { "key": "vendor", "value": "gpay" },
+                { "key": "amount", "value": "750" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - GPay Expected Response",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"vendor\": \"gpay\",\n  \"transactionId\": \"d4e5f6a7-b8c9-0123-defa-123456789003\",\n  \"payload\": {\n    \"vendor\": \"gpay\",\n    \"paymentStatus\": \"SUCCESS\",\n    \"transactionStatus\": \"COMPLETED\",\n    \"transactionId\": \"d4e5f6a7-b8c9-0123-defa-123456789003\",\n    \"referenceId\": \"GPAY_REF_D4E5F6A7\",\n    \"upiTransactionId\": \"1741860000000\",\n    \"amount\": \"750.00\",\n    \"currency\": \"INR\",\n    \"payerVpa\": \"customer@okicici\",\n    \"payeeVpa\": \"merchant@okaxis\",\n    \"payeeName\": \"Merchant\",\n    \"remarks\": \"Payment successful\",\n    \"responseCode\": \"00\",\n    \"approvalRefNumber\": \"482910\",\n    \"timestamp\": \"2026-03-13T10:00:00.000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /api/generate-payload - Generic ₹100",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Valid Generic payload', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.vendor).to.eql('generic');",
+                  "  pm.expect(json.payload.status).to.eql('SUCCESS');",
+                  "  pm.expect(json.payload.amount).to.eql('100.00');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/generate-payload?vendor=generic&amount=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "generate-payload"],
+              "query": [
+                { "key": "vendor", "value": "generic" },
+                { "key": "amount", "value": "100" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - Generic Expected Response",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"vendor\": \"generic\",\n  \"transactionId\": \"e5f6a7b8-c9d0-1234-efab-234567890004\",\n  \"payload\": {\n    \"vendor\": \"generic\",\n    \"status\": \"SUCCESS\",\n    \"transactionId\": \"e5f6a7b8-c9d0-1234-efab-234567890004\",\n    \"amount\": \"100.00\",\n    \"currency\": \"INR\",\n    \"paymentMethod\": \"UPI\",\n    \"vpa\": \"customer@upi\",\n    \"message\": \"Payment completed successfully\",\n    \"rrn\": \"174186000000\",\n    \"timestamp\": \"2026-03-13T10:00:00.000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /api/generate-payload - ERROR: Missing vendor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Validation error returned', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect(json.errors).to.be.an('array');",
+                  "  pm.expect(json.errors[0].field).to.eql('vendor');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/generate-payload?amount=500",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "generate-payload"],
+              "query": [
+                { "key": "amount", "value": "500" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "400 Bad Request - Missing vendor",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"errors\": [\n    {\n      \"field\": \"vendor\",\n      \"message\": \"vendor query param is required\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /api/generate-payload - ERROR: Invalid vendor name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Invalid vendor error', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect(json.errors[0].message).to.include('vendor must be one of');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/generate-payload?vendor=razorpay&amount=500",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "generate-payload"],
+              "query": [
+                { "key": "vendor", "value": "razorpay" },
+                { "key": "amount", "value": "500" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "400 Bad Request - Invalid vendor",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"errors\": [\n    {\n      \"field\": \"vendor\",\n      \"message\": \"vendor must be one of: paytm, phonepe, bharatpe, gpay, generic\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /api/generate-payload - ERROR: Invalid amount (negative)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Invalid amount error', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect(json.errors[0].field).to.eql('amount');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/generate-payload?vendor=paytm&amount=-50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "generate-payload"],
+              "query": [
+                { "key": "vendor", "value": "paytm" },
+                { "key": "amount", "value": "-50" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "400 Bad Request - Invalid amount",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"errors\": [\n    {\n      \"field\": \"amount\",\n      \"message\": \"amount must be a positive number (max 1,000,000)\"\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Proxy Inject",
+      "item": [
+        {
+          "name": "POST /api/proxy-inject - ERROR: Connection Refused",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 502', function () {",
+                  "  pm.response.to.have.status(502);",
+                  "});",
+                  "pm.test('Connection refused error', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect(json.targetIP).to.eql('127.0.0.1:9999');",
+                  "  pm.expect(json.error).to.eql('Connection refused by target');",
+                  "  pm.expect(json.code).to.eql('ECONNREFUSED');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/proxy-inject",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "proxy-inject"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetIP\": \"127.0.0.1:9999\",\n  \"payload\": {\n    \"vendor\": \"phonepe\",\n    \"success\": true,\n    \"code\": \"PAYMENT_SUCCESS\",\n    \"message\": \"Your payment is successful.\",\n    \"data\": {\n      \"amount\": 50000,\n      \"state\": \"COMPLETED\"\n    }\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [
+            {
+              "name": "502 Bad Gateway - Connection Refused",
+              "status": "Bad Gateway",
+              "code": 502,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"targetIP\": \"127.0.0.1:9999\",\n  \"error\": \"Connection refused by target\",\n  \"code\": \"ECONNREFUSED\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /api/proxy-inject - ERROR: Missing targetIP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Validation error for targetIP', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect(json.errors[0].field).to.eql('targetIP');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/proxy-inject",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "proxy-inject"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payload\": { \"status\": \"SUCCESS\" }\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [
+            {
+              "name": "400 Bad Request - Missing targetIP",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"errors\": [\n    {\n      \"field\": \"targetIP\",\n      \"message\": \"targetIP is required\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /api/proxy-inject - ERROR: Invalid IP format",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Invalid IP format error', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect(json.errors[0].field).to.eql('targetIP');",
+                  "  pm.expect(json.errors[0].message).to.include('valid IPv4');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/proxy-inject",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "proxy-inject"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetIP\": \"not-an-ip\",\n  \"payload\": { \"status\": \"SUCCESS\" }\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [
+            {
+              "name": "400 Bad Request - Invalid IP",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"errors\": [\n    {\n      \"field\": \"targetIP\",\n      \"message\": \"targetIP must be a valid IPv4 address, optionally with port (e.g. 192.168.1.1:8080)\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /api/proxy-inject - ERROR: Missing payload",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Validation error for payload', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect(json.errors[0].field).to.eql('payload');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/proxy-inject",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "proxy-inject"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetIP\": \"192.168.1.100:8080\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [
+            {
+              "name": "400 Bad Request - Missing payload",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"errors\": [\n    {\n      \"field\": \"payload\",\n      \"message\": \"payload is required\"\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Edge Cases",
+      "item": [
+        {
+          "name": "GET /api/unknown-route - 404 Not Found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404', function () {",
+                  "  pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test('404 error body', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect(json.error).to.include('not found');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/unknown-route",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "unknown-route"]
+            }
+          },
+          "response": [
+            {
+              "name": "404 Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"error\": \"Route GET /api/unknown-route not found\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
