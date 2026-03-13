@@ -5,7 +5,7 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const { v4: uuidv4 } = require('uuid');
 const axios = require('axios');
-const { body, query, validationResult } = require('express-validator');
+const { body, query: qParam, validationResult } = require('express-validator');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -138,42 +138,43 @@ app.get('/api/ping', (req, res) => {
   });
 });
 
-app.post(
-  '/api/generate-payload',
-  [
-    query('vendor')
-      .trim()
-      .toLowerCase()
-      .notEmpty().withMessage('vendor query param is required')
-      .isIn(SUPPORTED_VENDORS).withMessage(`vendor must be one of: ${SUPPORTED_VENDORS.join(', ')}`),
-    query('amount')
-      .notEmpty().withMessage('amount query param is required')
-      .isFloat({ min: 0.01, max: 1000000 }).withMessage('amount must be a positive number (max 1,000,000)')
-  ],
-  (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        errors: errors.array().map(e => ({ field: e.path, message: e.msg }))
-      });
-    }
+const generatePayloadMiddleware = [
+  qParam('vendor')
+    .trim()
+    .toLowerCase()
+    .notEmpty().withMessage('vendor query param is required')
+    .isIn(SUPPORTED_VENDORS).withMessage(`vendor must be one of: ${SUPPORTED_VENDORS.join(', ')}`),
+  qParam('amount')
+    .notEmpty().withMessage('amount query param is required')
+    .isFloat({ min: 0.01, max: 1000000 }).withMessage('amount must be a positive number (max 1,000,000)')
+];
 
-    const vendor = req.query.vendor.toLowerCase();
-    const amount = req.query.amount;
-    const txnId = uuidv4();
-    const timestamp = new Date().toISOString();
-
-    const payload = VENDOR_TEMPLATES[vendor](amount, txnId, timestamp);
-
-    return res.status(200).json({
-      success: true,
-      vendor,
-      transactionId: txnId,
-      payload
+const generatePayloadHandler = (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      success: false,
+      errors: errors.array().map(e => ({ field: e.path, message: e.msg }))
     });
   }
-);
+
+  const vendor = req.query.vendor.toLowerCase();
+  const amount = req.query.amount;
+  const txnId = uuidv4();
+  const timestamp = new Date().toISOString();
+
+  const payload = VENDOR_TEMPLATES[vendor](amount, txnId, timestamp);
+
+  return res.status(200).json({
+    success: true,
+    vendor,
+    transactionId: txnId,
+    payload
+  });
+};
+
+app.get('/api/generate-payload', generatePayloadMiddleware, generatePayloadHandler);
+app.post('/api/generate-payload', generatePayloadMiddleware, generatePayloadHandler);
 
 app.post(
   '/api/proxy-inject',
