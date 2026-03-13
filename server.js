@@ -9,19 +9,22 @@ const { body, query, validationResult } = require('express-validator');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';
+const RATE_LIMIT_MAX = parseInt(process.env.RATE_LIMIT_MAX || '100', 10);
+const RATE_LIMIT_WINDOW_MS = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cors({
-  origin: 'https://yourdomain.com',
+  origin: ALLOWED_ORIGIN === '*' ? '*' : ALLOWED_ORIGIN.split(',').map(s => s.trim()),
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 const limiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 100,
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  max: RATE_LIMIT_MAX,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
